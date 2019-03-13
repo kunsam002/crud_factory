@@ -99,12 +99,12 @@ def slugify(text, delim=u'-'):
     :param: delim: the separator between words.
 
     :returns: slugified text
-    :rtype: unicode
+    :rtype: str
     """
 
     result = []
     for word in _slugify_punct_re.split(text.lower()):
-        # ensured the unicode(word) because str broke the code
+        # ensured the str(word) because str broke the code
         word = normalize('NFKD', word).encode('ascii', 'ignore')
         if word:
             result.append(word.decode())
@@ -119,12 +119,12 @@ def normalize_text(text):
     if text:
         result = []
         for word in text:
-            # ensured the unicode(word) because str broke the code
+            # ensured the str(word) because str broke the code
             word = re.sub(r'[^\x00-\x7f]', r'', word)
-            word = normalize('NFKD', unicode(word)).encode('ascii', 'ignore')
+            word = normalize('NFKD', str(word)).encode('ascii', 'ignore')
             if word:
                 result.append(word)
-        return unicode(''.join(result))
+        return str(''.join(result))
 
 
 def clean_ascii(raw):
@@ -396,7 +396,7 @@ def format_phone_numbers(raw_numbers, code):
         raw_numbers = re.sub(r'[^\x00-\x7F]+', ' ', raw_numbers)
 
     numbers = []
-    for n in unidecode(unicode(raw_numbers)).replace("or", ","). \
+    for n in unidecode(str(raw_numbers)).replace("or", ","). \
             replace("\n", ","). \
             replace(".", ","). \
             replace("and", ","). \
