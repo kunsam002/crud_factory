@@ -248,6 +248,7 @@ def remove_empty_keys(data):
 
     return res
 
+
 def prepare_errors(errors):
     _errors = {}
     for k, v in errors.items():
@@ -412,7 +413,6 @@ def format_phone_numbers(raw_numbers, code):
                     numbers.append(num)
             except Exception as e:
                 print(e)
-                pass
 
     return numbers
 
@@ -435,22 +435,9 @@ def convert_dict(data, indent=None):
 def secured_password(password):
     flag = 0
     while True:
-        if (len(password) < 8):
-            flag = -1
-            break
-        elif not re.search("[a-z]", password):
-            flag = -1
-            break
-        elif not re.search("[A-Z]", password):
-            flag = -1
-            break
-        elif not re.search("[0-9]", password):
-            flag = -1
-            break
-        elif not re.search("[_~!@#$%^&{}:;`*()|/='.,<>?+-]", password):
-            flag = -1
-            break
-        elif re.search("\s", password):
+        if (len(password) < 8) or not re.search("[a-z]", password) or not re.search("[A-Z]", password) or not re.search(
+                "[0-9]", password) or not re.search("[_~!@#$%^&{}:;`*()|/='.,<>?+-]", password) or re.search("\s",
+                                                                                                             password):
             flag = -1
             break
         else:
