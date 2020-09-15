@@ -26,136 +26,127 @@ class CRUDFactory(object):
     specific methods for creating, retrieving, updating, deleting and querying data.
     """
 
+    model_class = None
+    db = None
+
     @classmethod
-    def create_service(cls, klass, db):
+    def _handle_insert(cls, obj, ignored_args, **kwargs):
+        data = utils.clean_kwargs(ignored_args, kwargs)
+        obj = utils.populate_obj(obj, data)
+        cls.db.session.add(obj)
+        try:
+            cls.db.session.commit()
+            return obj
+        except Exception as e:
+            print(e)
+            cls.db.session.rollback()
+            raise
+
+    @classmethod
+    def _create(cls, ignored_args: list = None, **kwargs):
         """
-        :param cls: SQLAlchemy model class to be bound to service.
+        Create the new model object and persist it.
+        Execute possible pre/post method calls for audit and others
+        """
+        if not ignored_args:
+            ignored_args = ["id", "date_created", "last_updated"]
 
-        This model will return
+        obj = cls.model_class()
+
+        return cls._handle_insert(obj, ignored_args, **kwargs)
+
+    @classmethod
+    def _update(cls, obj_id: int, ignored_args: list = None, **kwargs):
+        """
+        Update an existing model by obj_id and persist it. Execute
         """
 
-        class BaseService:
-            """ Generic class that contains all static/class methods required """
+        obj = cls.model_class.query.get(obj_id)
 
-            def __init__(self):
-                pass
+        if not obj:
+            raise ObjectNotFoundException(cls.model_class, obj_id)
 
-            db = None
-            query = None
+        obj = cls.db.session.merge(obj)
+        if not ignored_args:
+            ignored_args = ["id", "date_created", "last_updated"]
 
-            @classmethod
-            def create(cls, ignored_args=None, **kwargs):
-                """ Create the new model object and persist it. Execute possible pre/post method calls for audit and others """
-                if not ignored_args:
-                    ignored_args = ["id", "date_created", "last_updated"]
+        return cls._handle_insert(obj, ignored_args, **kwargs)
 
-                obj = BaseService.model_class()
-                data = utils.clean_kwargs(ignored_args, kwargs)
-                obj = utils.populate_obj(obj, data)
+    @classmethod
+    def _update_by_ids(cls, obj_ids: list, ignored_args: list = [], **kwargs):
+        """
+        Execute bulk update on a group of objects selected by their ids
+        """
 
-                db.session.add(obj)
-                try:
-                    db.session.commit()
-                    return obj
-                except Exception as e:
-                    print(e)
-                    db.session.rollback()
-                    raise
+        data = utils.clean_kwargs(ignored_args, kwargs)
+        data = utils.remove_invalid_attributes(cls.model_class(), data)
 
-            @classmethod
-            def update(cls, obj_id, ignored_args=None, **kwargs):
-                """ Update an existing model by obj_id and persist it. Execute """
+        try:
+            res = cls.model_class.query.filter(cls.model_class.id.in_(obj_ids)).update(
+                data, synchronize_session=False
+            )
+            cls.db.session.commit()
+            return res
+        except Exception as e:
+            cls.db.session.rollback()
+            raise e
 
-                obj = BaseService.model_class.query.get(obj_id)
+    @classmethod
+    def _get(cls, obj_id: int):
+        """
+        Simple query method to get an object by obj_id
+        """
+        obj = cls.model_class.query.get(obj_id)
 
-                if not obj:
-                    raise ObjectNotFoundException(BaseService.model_class, obj_id)
+        if not obj:
+            raise ObjectNotFoundException(cls.model_class, obj_id)
 
-                obj = db.session.merge(obj)
-                if not ignored_args:
-                    ignored_args = ["id", "date_created", "last_updated"]
+        return obj
 
-                data = utils.clean_kwargs(ignored_args, kwargs)
-                obj = utils.populate_obj(obj, data)
-                db.session.add(obj)
-                try:
-                    db.session.commit()
-                    return obj
-                except Exception as e:
-                    print(e)
-                    db.session.rollback()
-                    raise
+    @classmethod
+    def _delete(cls, obj_id: int):
+        """
+        delete an object for the existing model by obj_id
+        """
 
-            @classmethod
-            def update_by_ids(cls, obj_ids, ignored_args=[], **kwargs):
-                """ Execute bulk update on a group of objects selected by their ids """
+        obj = cls.model_class.query.get(obj_id)
+        obj = cls.db.session.merge(obj)
 
-                data = utils.clean_kwargs(ignored_args, kwargs)
-                data = utils.remove_invalid_attributes(BaseService.model_class(), data)
+        if not obj:
+            raise ObjectNotFoundException(cls.model_class, obj_id)
 
-                try:
-                    res = cls.query.filter(cls.model_class.id.in_(obj_ids)).update(data, synchronize_session=False)
-                    db.session.commit()
-                    return res
-                except Exception as e:
-                    db.session.rollback()
-                    raise
+        cls.db.session.delete(obj)
+        try:
+            cls.db.session.commit()
+            return True
+        except Exception:
+            cls.db.session.rollback()
+            raise
 
-            @classmethod
-            def get(cls, obj_id):
-                """ Simple query method to get an object by obj_id """
-                obj = cls.query.get(obj_id)
+    @classmethod
+    def _get_by_ids(cls, ids: list = None):
+        """
+        Retrieve an array of objects specified by the ids
+        """
+        if not ids:
+            ids = []
 
-                if not obj:
-                    raise ObjectNotFoundException(BaseService.model_class, obj_id)
+        objects = cls.model_class.query.filter(cls.model_class.id.in_(ids))
 
-                return obj
+        return objects
 
-            @classmethod
-            def delete(cls, obj_id):
-                """ delete an object for the existing model by obj_id"""
-
-                obj = cls.query.get(obj_id)
-                obj = db.session.merge(obj)
-
-                if not obj:
-                    raise ObjectNotFoundException(BaseService.model_class, obj_id)
-
-                db.session.delete(obj)
-                try:
-                    db.session.commit()
-                    return True
-                except:
-                    db.session.rollback()
-                    raise
-
-            @classmethod
-            def get_by_ids(cls, ids=None):
-                """ Retrieve an array of objects specified by the ids """
-                if not ids:
-                    ids = []
-
-                objects = cls.query.filter(cls.model_class.id.in_(ids))
-
-                return objects
-
-            @classmethod
-            def delete_by_ids(cls, ids=None):
-                """ Delete an array of objects specified by ids """
-                if not ids:
-                    ids = []
-                for obj in cls.model_class.query.filter(cls.model_class.id.in_(ids)):
-                    db.session.delete(obj)
-                    try:
-                        db.session.commit()
-                    except:
-                        db.session.rollback()
-                        raise
-                return True
-
-        # Set the model class on the service
-        BaseService.model_class = klass
-        BaseService.db = db
-        BaseService.query = klass.query
-
-        return BaseService
+    @classmethod
+    def _delete_by_ids(cls, ids: list = None):
+        """
+        Delete an array of objects specified by ids
+        """
+        if not ids:
+            ids = []
+        for obj in cls.model_class.query.filter(cls.model_class.id.in_(ids)):
+            cls.db.session.delete(obj)
+            try:
+                cls.db.session.commit()
+            except Exception:
+                cls.db.session.rollback()
+                raise
+        return True

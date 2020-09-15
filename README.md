@@ -13,8 +13,16 @@ pip install crud_factory
 ## Usage
 
 ```python
+import db # from models 
+
 from crud_factory import CRUDFactory
 
+class BaseService(CRUDFactory):
+    db = db
+
+class UserService(BaseService):
+    """ Activities of a User """
+    model_class = User
 ```
 
 ## Contributing
@@ -22,7 +30,7 @@ Pull requests are welcome. For major changes, please open an issue first or cont
 
 
 ## Dependencies
-Python3
+Python>=3.7
 SQLAlchemy
 phonenumbers
 Unidecode

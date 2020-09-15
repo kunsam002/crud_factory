@@ -35,9 +35,9 @@ class ValidationFailed(HTTPException):
         self.status = 409
 
 
-class StewJWT:
+class CRUDJWT:
     """the custom JWT object to be used by all apps for authentication and authorization
-    within the stew eco-system"""
+    within the crud eco-system"""
 
     def __init__(self, app, ref=None, model=None):
         self.app = app if app else current_app
