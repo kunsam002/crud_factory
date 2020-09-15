@@ -3,6 +3,7 @@
 @Author: Olukunle Ogunmokun
 @github: https://github.com/kunsam002
 @username: Kunsam002
+@last_update: 15th, Sep 2020
 
 """
 
@@ -104,6 +105,18 @@ class CRUDFactory(object):
         return obj
 
     @classmethod
+    def _get_by_ids(cls, ids: list = None):
+        """
+        Retrieve an array of objects specified by the ids
+        """
+        if not ids:
+            ids = []
+
+        objects = cls.model_class.query.filter(cls.model_class.id.in_(ids))
+
+        return objects
+
+    @classmethod
     def _delete(cls, obj_id: int):
         """
         delete an object for the existing model by obj_id
@@ -124,18 +137,6 @@ class CRUDFactory(object):
             raise
 
     @classmethod
-    def _get_by_ids(cls, ids: list = None):
-        """
-        Retrieve an array of objects specified by the ids
-        """
-        if not ids:
-            ids = []
-
-        objects = cls.model_class.query.filter(cls.model_class.id.in_(ids))
-
-        return objects
-
-    @classmethod
     def _delete_by_ids(cls, ids: list = None):
         """
         Delete an array of objects specified by ids
@@ -150,3 +151,31 @@ class CRUDFactory(object):
                 cls.db.session.rollback()
                 raise
         return True
+
+    @classmethod
+    def create(cls, ignored_args: list = None, **kwargs):
+        return cls._create(ignored_args, **kwargs)
+
+    @classmethod
+    def update(cls, obj_id: int, ignored_args: list = None, **kwargs):
+        return cls._update(obj_id, ignored_args, **kwargs)
+
+    @classmethod
+    def update_by_ids(cls, obj_ids: list, ignored_args: list = [], **kwargs):
+        return cls._update_by_ids(obj_ids, ignored_args, **kwargs)
+
+    @classmethod
+    def get(cls, obj_id: int):
+        return cls._get(obj_id)
+
+    @classmethod
+    def get_by_ids(cls, ids: list = None):
+        return cls._get_by_ids(ids)
+
+    @classmethod
+    def delete(cls, obj_id: int):
+        return cls._delete(obj_id)
+
+    @classmethod
+    def delete_by_ids(cls, ids: list = None):
+        return cls._delete_by_ids(ids)

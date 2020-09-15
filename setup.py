@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='crud_factory',
-    version='1.0.5',
+    version='1.0.6',
     packages=['crud_factory'],
     url='https://github.com/kunsam002/crud_factory',
     license='',
